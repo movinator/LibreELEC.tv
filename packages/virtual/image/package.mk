@@ -29,6 +29,9 @@ PKG_LONGDESC="Root package used to build and create complete image"
 # Virtual image creation support
 [ "${PROJECT}" = "Generic" ] && PKG_DEPENDS_TARGET+=" virtual"
 
+# support for penta-sata tower on rockpi
+[ "${PROJECT}" = "Rockchip" ] && PKG_DEPENDS_TARGET+=" pentasata"
+
 # Installer support
 [ "${INSTALLER_SUPPORT}" = "yes" ] && PKG_DEPENDS_TARGET+=" installer"
 

@@ -56,7 +56,8 @@ class MainControl:
     def read_key(self):
         while True:
             self.key.value = self.pb.read_key()
-            time.sleep(0.1)
+            syslog.syslog('received key with code #' + str(self.key.value))
+            time.sleep(1)
 
 
     def execute(self, what):
@@ -89,7 +90,7 @@ class MainControl:
             elif self.key.value == 2:
                 syslog.syslog('recognized double-click from top-panel button')
                 self.execute(self.cfg.get_doubleclick())
-            elif self.key.value == 3:
+            elif self.key.value == 99:
                 syslog.syslog('recognized long buttonpress from top-panel button')
                 self.execute(self.cfg.get_pressed())
             self.key.value = 0

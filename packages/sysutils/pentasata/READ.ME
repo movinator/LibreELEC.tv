@@ -1,0 +1,76 @@
+Fan-control for LibreElec
+-------------------------
+extension was developed for Penta-Sata-Towers with rock Pi4.
+Original driver from radxa uses propietary port of pigpio, which I could not
+port it to LE. Furthermore LE does not provide a real shell, but uses busybox.
+Busybox does not contain support for arrays in shellscripts, so had to find
+different solution. And LE does not provide perl, so had to use python :(
+
+Therefore I wrote some python scripts on my own, that work with the tools provided
+by LE.
+
+One remaining problem is, that dtb overlays don't work for rock pi4. Using overlays
+breaks boot process. So if you want to use fan control, you have to "patch" dtb on
+your own.
+
+1. copy existing dtb from /flash to some place where you have space and
+   write permission. Could be on LE, but does not need to (scp is your friend)
+
+2. decompile dtb into source with this command (my dtb is rk3399-rock-pi-4a.dtb):
+     dtc -I dtb -O dts -o rk3399-rock-pi-4a.dts rk3399-rock-pi-4a.dtb
+
+3. load dts file in your favorite editor and search for "pwm@ff42" and you'll
+   find several matching sections like this:
+
+   pwm@ff420000 {
+        compatible = "rockchip,rk3399-pwm\0rockchip,rk3288-pwm";
+        reg = < 0x00 0xff420000 0x00 0x10 >;
+        #pwm-cells = < 0x03 >;
+        pinctrl-names = "default";
+        pinctrl-0 = < 0x85 >;
+        clocks = < 0x76 0x1e >;
+        clock-names = "pwm";
+        status = "disabled";
+        phandle = < 0xf6 >;
+        };
+
+   pwm@ff420010 {
+        compatible = "rockchip,rk3399-pwm\0rockchip,rk3288-pwm";
+        reg = < 0x00 0xff420010 0x00 0x10 >;
+        #pwm-cells = < 0x03 >;
+        pinctrl-names = "default";
+        pinctrl-0 = < 0x86 >;
+        clocks = < 0x76 0x1e >;
+        clock-names = "pwm";
+        status = "disabled";
+        phandle = < 0xf7 >;
+        };
+
+4. replace line 'status = "disabled"' with line 'status = "okay"'
+5. save file and exit editor
+6. copy file back to LE - to a writable directory
+7. compile dts file (on your LE) into dtb with this command:
+     dtc -O dtb -o rk3399-rock-pi-4a.dtb -b O -@ rk3399-rock-pi-4a.dts
+8. copy compiled binary to /flash overwriting the original dtb file
+
+That's it. After reboot, fan starts at full speed until start of fancontrol.
+
+if you want the fancontrol to start without having it to start, add these
+lines to /storage/.config/autostart.sh
+    if [ -e /usr/sbin/fanctl ]; then
+      /usr/sbin/fanctl &
+    fi
+
+Beside fan-control, this package provides support for the top-panel button.
+Three states are recognized: click, double-click and (long) pressed.
+Default function toggle fan-control at click (toggle between temperature
+controlled fan and fullspeed running fan), reboot on double-click and
+poweroff at long press.
+
+Customization
+-------------
+if you like to change temperature-based fan-speed or change the button functions
+look at /etc/rockpi-sata.conf
+
+
+Have fun
